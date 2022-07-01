@@ -1,10 +1,8 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"github.com/aliyun/fc-runtime-go-sdk/fc"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -49,12 +47,13 @@ func HandleHttpRequest(ctx context.Context, w http.ResponseWriter, req *http.Req
 	//dataOutput = data
 	// response的Body不能多次读取，
 	// 上面已经被读取过一次，需要重新生成可读取的Body数据。
-	resProxyBody := ioutil.NopCloser(bytes.NewBuffer(data))
-	defer resProxyBody.Close() // 延时关闭
+	//resProxyBody := ioutil.NopCloser(bytes.NewBuffer(data))
+	//defer resProxyBody.Close() // 延时关闭
 	// 响应状态码
 	w.WriteHeader(responseProxy.StatusCode)
 	// 复制转发的响应Body到响应Body
-	io.Copy(w, resProxyBody)
+	//io.Copy(w, resProxyBody)
+	w.Write(data)
 	return nil
 }
 
