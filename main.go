@@ -35,6 +35,7 @@ func HandleHttpRequest(ctx context.Context, w http.ResponseWriter, req *http.Req
 	}
 	// 发起请求
 	responseProxy, err := cli.Do(reqProxy)
+	fctx.GetLogger().Info("req", reqProxy)
 	fctx.GetLogger().Info("reqUrl", reqURL)
 	fctx.GetLogger().Info(responseProxy)
 	defer responseProxy.Body.Close()
