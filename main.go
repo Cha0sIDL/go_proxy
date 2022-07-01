@@ -3,15 +3,14 @@ package main
 import (
 	"context"
 	"github.com/aliyun/fc-runtime-go-sdk/fc"
-	"github.com/aliyun/fc-runtime-go-sdk/fccontext"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"strings"
 )
 
 func HandleHttpRequest(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
-	fctx, _ := fccontext.FromContext(ctx)
 	cli := &http.Client{}
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
@@ -22,7 +21,13 @@ func HandleHttpRequest(ctx context.Context, w http.ResponseWriter, req *http.Req
 	}
 	// 转发的URL
 	reqURL := req.Header.Get("proxy")
-	reqProxy, err := http.NewRequest(req.Method, reqURL, strings.NewReader(string(body)))
+	u, err := url.ParseRequestURI(reqURL)
+	if err != nil {
+		w.Header().Add("Content-Type", "text/plain")
+		w.Write([]byte(err.Error()))
+		return nil
+	}
+	reqProxy, err := http.NewRequest(req.Method, u.String(), strings.NewReader(string(body)))
 	if err != nil {
 		log.Println("创建转发请求发生错误")
 		// 响应状态码
@@ -35,10 +40,11 @@ func HandleHttpRequest(ctx context.Context, w http.ResponseWriter, req *http.Req
 	}
 	// 发起请求
 	responseProxy, err := cli.Do(reqProxy)
-	fctx.GetLogger().Info(err)
-	fctx.GetLogger().Info("req", reqProxy)
-	fctx.GetLogger().Info("reqUrl", reqURL)
-	fctx.GetLogger().Info(responseProxy)
+	if err != nil {
+		w.Header().Add("Content-Type", "text/plain")
+		w.Write([]byte(err.Error()))
+		return nil
+	}
 	defer responseProxy.Body.Close()
 	// 转发响应的 Header
 	for k, v := range responseProxy.Header {
